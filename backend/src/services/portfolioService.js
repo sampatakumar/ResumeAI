@@ -98,7 +98,7 @@ export const publishPortfolio = async (userId, userPreference = "", customDomain
   let record = await db.portfolios.findByUserId(user._id);
 
   if (!record) {
-    const slug = `${slugify(user.displayName || user.email || "portfolio")}-${nanoid(6).toLowerCase()}`;
+    const slug = `${slugify(user.displayName || user.email || "portfolio")}-${nanoid(6).toLowerCase()}`.replace(/_/g, "-");
     logger.info("portfolio:creating-record", { projectName: slug });
 
     record = await db.portfolios.create({

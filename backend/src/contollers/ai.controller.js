@@ -3,7 +3,8 @@ import {
   expandProjectBullet,
   generateAtsDescriptionBullets,
   generateProfileSummary,
-  generateTailoredResume
+  generateTailoredResume,
+  parseResumeWithLLM
 } from "../services/groq.service.js";
 import {
   extractJdRequirementsWithLangChain,
@@ -88,6 +89,69 @@ const generateDescriptionBulletsSchema = z.object({
   count: z.number().int().min(1).max(6).optional().default(3)
 });
 
+const nullableString = z.union([z.string(), z.null(), z.undefined()]).transform(val => val || "");
+const nullableStringArray = z.union([z.array(z.string()), z.null(), z.undefined()]).transform(val => {
+  if (!Array.isArray(val)) return [];
+  return val.filter(item => typeof item === "string");
+});
+
+const llmParsedResumeSchema = z.object({
+  profile: z.object({
+    displayName: nullableString,
+    headline: nullableString,
+    phone: nullableString,
+    about: nullableString
+  }).catch({ displayName: "", headline: "", phone: "", about: "" }).default({}),
+  preferences: z.object({
+    linkedInUrl: nullableString,
+    githubUrl: nullableString
+  }).catch({ linkedInUrl: "", githubUrl: "" }).default({}),
+  contact: z.object({
+    email: nullableString
+  }).catch({ email: "" }).default({}),
+  educationEntries: z.array(z.object({
+    degree: nullableString,
+    specialization: nullableString,
+    college: nullableString,
+    location: nullableString,
+    endDate: nullableString,
+    grade: nullableString
+  })).catch([]).default([]),
+  skillSections: z.array(z.object({
+    title: nullableString,
+    skills: nullableStringArray
+  })).catch([]).default([]),
+  experience: z.array(z.object({
+    role: nullableString,
+    company: nullableString,
+    location: nullableString,
+    date: nullableString,
+    bullets: nullableStringArray
+  })).catch([]).default([]),
+  projects: z.array(z.object({
+    title: nullableString,
+    description: nullableString,
+    stack: nullableString,
+    date: nullableString,
+    githubUrl: nullableString,
+    demoUrl: nullableString
+  })).catch([]).default([]),
+  achievements: z.array(z.object({
+    title: nullableString,
+    date: nullableString,
+    bullets: nullableStringArray
+  })).catch([]).default([])
+}).catch({
+  profile: { displayName: "", headline: "", phone: "", about: "" },
+  preferences: { linkedInUrl: "", githubUrl: "" },
+  contact: { email: "" },
+  educationEntries: [],
+  skillSections: [],
+  experience: [],
+  projects: [],
+  achievements: []
+});
+
 const safeJsonParse = (value) => {
   if (!value || typeof value !== "string") {
     return null;
@@ -108,500 +172,7 @@ const emailRegex = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i;
 const phoneRegex = /(?:\+?\d{1,3}[\s-]?)?(?:\(?\d{2,4}\)?[\s-]?)?\d{3,5}[\s-]?\d{3,5}/;
 const linkedInRegex = /https?:\/\/(?:www\.)?linkedin\.com\/[A-Za-z0-9\-_/?.=&%#]+/i;
 const githubRegex = /https?:\/\/(?:www\.)?github\.com\/[A-Za-z0-9\-_/?.=&%#]+/i;
-const degreeHintRegex = /(b\.?\s?tech|bachelor|master|m\.?\s?tech|bca|mca|bsc|msc|phd|diploma|mba|b\.?\s?e\.?|m\.?\s?e\.?)/i;
-const instituteHintRegex = /(university|college|institute|school|academy)/i;
-const gradeHintRegex = /(cgpa|gpa|grade|percentage|marks?)/i;
-const yearRangeRegex = /(?:19|20)\d{2}(?:\s*[-–]\s*(?:present|current|(?:19|20)\d{2}))?/i;
-const locationHintRegex = /(india|remote|delhi|mumbai|bengaluru|bangalore|pune|hyderabad|chennai|kolkata|noida|gurgaon|gurugram)/i;
-const headingHintRegex = /(professional summary|summary|education|technical skills?|skills|projects?|achievements?|profiles?|experience|work experience|professional experience)/i;
-const roleHintRegex = /(engineer|developer|intern|student|undergrad|designer|devops|software|frontend|backend|full[-\s]?stack|analyst|consultant)/i;
 
-const toCleanLine = (value) =>
-  normalizeText(value)
-    .replace(/^[\-*•]+\s*/, "")
-    .replace(/[ï§]/g, " ")
-    .replace(/\s{2,}/g, " ");
-
-const toNonEmptyLines = (value) =>
-  String(value || "")
-    .split(/\r?\n/)
-    .map((line) => toCleanLine(line))
-    .filter(Boolean);
-
-const maybeExtractDate = (value) => normalizeText(String(value || "").match(yearRangeRegex)?.[0] || "");
-
-const extractTopBlockLines = (rawText) => {
-  const lines = toNonEmptyLines(rawText);
-  const topBlock = [];
-
-  for (const line of lines) {
-    if (headingHintRegex.test(line)) {
-      break;
-    }
-
-    topBlock.push(line);
-
-    if (topBlock.length >= 8) {
-      break;
-    }
-  }
-
-  return topBlock;
-};
-
-const cleanCandidateName = (value) =>
-  normalizeText(value)
-    .replace(/\b\d{5,}\b/g, "")
-    .replace(/[|#·]/g, " ")
-    .replace(/\s{2,}/g, " ");
-
-const inferDisplayName = (rawText) => {
-  const lines = extractTopBlockLines(rawText);
-  const candidate = lines.find((line) => {
-    if (line.length < 3 || line.length > 80) return false;
-    if (emailRegex.test(line) || linkedInRegex.test(line) || githubRegex.test(line)) return false;
-    if (phoneRegex.test(line)) return false;
-    if (headingHintRegex.test(line)) return false;
-    const words = cleanCandidateName(line).split(/\s+/).filter(Boolean);
-    return words.length >= 2 && words.length <= 5;
-  });
-
-  return cleanCandidateName(candidate || "");
-};
-
-const inferHeadline = (rawText, displayName) => {
-  const lines = extractTopBlockLines(rawText);
-  const topLineCandidate = lines.find((line) => {
-    if (!line || line === displayName) return false;
-    if (line.length < 4 || line.length > 90) return false;
-    if (emailRegex.test(line) || linkedInRegex.test(line) || githubRegex.test(line)) return false;
-    if (phoneRegex.test(line) || locationHintRegex.test(line)) return false;
-    return roleHintRegex.test(line);
-  });
-
-  if (topLineCandidate) {
-    return normalizeText(topLineCandidate);
-  }
-
-  const summaryLeadLine = normalizeText(
-    String(rawText || "").match(/Professional Summary\s*[\r\n]+([^\r\n]+)/i)?.[1] || ""
-  );
-  if (summaryLeadLine) {
-    const phraseBeforeWith = normalizeText(summaryLeadLine.split(/\bwith\b/i)[0] || "");
-    if (phraseBeforeWith && phraseBeforeWith.length <= 60) {
-      return phraseBeforeWith;
-    }
-  }
-
-  return "";
-};
-
-const inferAboutFromTopLines = (rawText) => {
-  const summarySectionMatch = String(rawText || "").match(
-    /Professional Summary\s*[\r\n]+([\s\S]*?)(?:[\r\n]{1,2}(?:Education|Technical Skills?|Skills|Projects?|Experience|Achievements?|Profiles?)\b|$)/i
-  );
-  if (summarySectionMatch?.[1]) {
-    return normalizeText(
-      toNonEmptyLines(summarySectionMatch[1])
-        .slice(0, 3)
-        .join(" ")
-        .slice(0, 500)
-    );
-  }
-
-  const lines = toNonEmptyLines(rawText)
-    .filter((line) => !emailRegex.test(line))
-    .filter((line) => !phoneRegex.test(line))
-    .filter((line) => !linkedInRegex.test(line) && !githubRegex.test(line))
-    .filter((line) => !headingHintRegex.test(line))
-    .filter((line) => line.length >= 20 && line.length <= 260)
-    .slice(0, 2);
-
-  return normalizeText(lines.join(" ").slice(0, 500));
-};
-
-const parseEducationLine = (line, fallbackCollege = "", fallbackLocation = "") => {
-  const clean = toCleanLine(line);
-  if (!clean) {
-    return null;
-  }
-
-  const chunks = clean
-    .split(/\s*\|\s*|,\s*/)
-    .map((item) => normalizeText(item))
-    .filter(Boolean);
-
-  const degree = normalizeText(
-    chunks.find((chunk) => degreeHintRegex.test(chunk)) ||
-      normalizeText(
-        String(clean.match(/^(.*?)(?:\s+[—-]\s+|(?:CGPA|GPA|percentage|marks?)\s*:|Expected|$)/i)?.[1] || "")
-      )
-  );
-  const college = normalizeText(
-    chunks.find((chunk) => instituteHintRegex.test(chunk)) ||
-      fallbackCollege ||
-      chunks.find((chunk) => !degreeHintRegex.test(chunk) && !gradeHintRegex.test(chunk) && !yearRangeRegex.test(chunk))
-  );
-  const rawGradeChunk =
-    chunks.find((chunk) => gradeHintRegex.test(chunk)) ||
-    normalizeText(String(clean.match(/((?:CGPA|GPA|percentage|marks?)\s*[:\-]?\s*[0-9]+(?:\.[0-9]+)?(?:\/[0-9]+(?:\.[0-9]+)?)?%?)/i)?.[1] || ""));
-  const grade = normalizeText(rawGradeChunk || "");
-  const endDate = maybeExtractDate(clean);
-  const location = normalizeText(chunks.find((chunk) => locationHintRegex.test(chunk)) || fallbackLocation || "");
-
-  const specializationCandidate = normalizeText(
-    chunks.find((chunk) => chunk !== degree && chunk !== college && chunk !== grade && chunk !== location && !yearRangeRegex.test(chunk)) || ""
-  );
-
-  const entry = {
-    degree,
-    specialization: specializationCandidate,
-    college,
-    location,
-    endDate,
-    grade
-  };
-
-  return Object.values(entry).some(Boolean) ? entry : null;
-};
-
-const parseEducationEntriesFromText = (educationText) => {
-  const lines = toNonEmptyLines(educationText).filter((line) => !headingHintRegex.test(line));
-  const entries = [];
-
-  for (let index = 0; index < lines.length; index += 1) {
-    const line = lines[index];
-    const nextLine = lines[index + 1] || "";
-
-    const isInstitutionLine =
-      instituteHintRegex.test(line) ||
-      locationHintRegex.test(line) ||
-      (line.includes(",") && !degreeHintRegex.test(line) && !gradeHintRegex.test(line));
-    const nextIsDegreeLike = degreeHintRegex.test(nextLine) || gradeHintRegex.test(nextLine);
-
-    if (isInstitutionLine && nextIsDegreeLike) {
-      const institutionParts = line.split(",").map((part) => normalizeText(part)).filter(Boolean);
-      const fallbackCollege = institutionParts[0] || "";
-      const fallbackLocation = institutionParts.slice(1).join(", ");
-      const pairedEntry = parseEducationLine(nextLine, fallbackCollege, fallbackLocation);
-      if (pairedEntry) {
-        entries.push(pairedEntry);
-      }
-      index += 1;
-      continue;
-    }
-
-    const singleEntry = parseEducationLine(line);
-    if (singleEntry) {
-      entries.push(singleEntry);
-    }
-  }
-
-  return entries.filter((entry) => Object.values(entry).some(Boolean)).slice(0, 8);
-};
-
-const parseExperienceEntriesFromText = (experienceText) => {
-  const rawLines = String(experienceText || "")
-    .split(/\r?\n/)
-    .map((line) => normalizeText(line))
-    .filter(Boolean);
-
-  if (!rawLines.length) {
-    return [];
-  }
-
-  const experiences = [];
-  let current = null;
-
-  const commitCurrent = () => {
-    if (!current) {
-      return;
-    }
-    const cleaned = {
-      role: normalizeText(current.role),
-      company: normalizeText(current.company),
-      location: normalizeText(current.location),
-      date: normalizeText(current.date),
-      bullets: uniqueStrings(current.bullets || []).slice(0, 6)
-    };
-    if (cleaned.role || cleaned.company || cleaned.bullets.length) {
-      experiences.push(cleaned);
-    }
-  };
-
-  for (const line of rawLines) {
-    const isBullet = /^[-*•]\s+/.test(line);
-    const cleanedLine = toCleanLine(line);
-    if (!cleanedLine) {
-      continue;
-    }
-
-    if (headingHintRegex.test(cleanedLine)) {
-      continue;
-    }
-
-    if (isBullet) {
-      if (!current) {
-        current = { role: "", company: "", location: "", date: "", bullets: [] };
-      }
-      current.bullets.push(cleanedLine);
-      continue;
-    }
-
-    const withAt = cleanedLine.match(/^(.+?)\s+at\s+(.+)$/i);
-    const splitByPipe = cleanedLine.split("|").map((part) => normalizeText(part)).filter(Boolean);
-    const inferredDate = maybeExtractDate(cleanedLine);
-    const looksLikeRoleLine = roleHintRegex.test(cleanedLine);
-    const looksLikeHeader =
-      Boolean(withAt) ||
-      splitByPipe.length >= 2 ||
-      looksLikeRoleLine ||
-      (Boolean(inferredDate) && /[|,@-]/.test(cleanedLine));
-
-    if (!looksLikeHeader) {
-      if (current) {
-        current.bullets.push(cleanedLine);
-      }
-      continue;
-    }
-
-    commitCurrent();
-    current = { role: "", company: "", location: "", date: inferredDate, bullets: [] };
-
-    if (withAt) {
-      current.role = normalizeText(withAt[1]);
-      current.company = normalizeText(withAt[2]);
-    } else if (splitByPipe.length >= 2) {
-      current.role = splitByPipe[0];
-      current.company = splitByPipe[1];
-      current.location = splitByPipe[2] || "";
-      if (!current.date) {
-        current.date = maybeExtractDate(splitByPipe.join(" "));
-      }
-    } else {
-      current.role = cleanedLine;
-    }
-  }
-
-  commitCurrent();
-  return experiences.slice(0, 6);
-};
-
-const parseProjectEntriesFromText = (projectsText) => {
-  const rawLines = String(projectsText || "")
-    .split(/\r?\n/)
-    .map((line) => normalizeText(line))
-    .filter(Boolean);
-
-  const projects = [];
-  let current = null;
-
-  const commitCurrent = () => {
-    if (!current) {
-      return;
-    }
-    const title = normalizeText(current.title);
-    const description = uniqueStrings(current.descriptionLines || []).join(" ").slice(0, 280);
-    if (title || description) {
-      projects.push({
-        title: title || "Untitled Project",
-        description,
-        stack: normalizeText(current.stack || ""),
-        date: normalizeText(current.date),
-        githubUrl: normalizeText(current.githubUrl || ""),
-        demoUrl: normalizeText(current.demoUrl || "")
-      });
-    }
-  };
-
-  for (const line of rawLines) {
-    const isBullet = /^[-*•]\s+/.test(line);
-    const clean = toCleanLine(line);
-    if (!clean) {
-      continue;
-    }
-
-    if (isBullet) {
-      if (!current) {
-        current = { title: "", descriptionLines: [], stack: "", date: "", githubUrl: "", demoUrl: "" };
-      }
-      current.descriptionLines.push(clean);
-      continue;
-    }
-
-    const looksLikeNewProject = /\s+[—-]\s+/.test(clean) || clean.includes(" | ") || /\b(project|app|platform|system|website)\b/i.test(clean);
-    if (!current || looksLikeNewProject) {
-      commitCurrent();
-      const [titlePart, stackPart] = clean.split("|").map((part) => normalizeText(part));
-      const normalizedTitle = normalizeText(
-        String(titlePart || "").replace(/\b(?:GitHub|Live)\b\s*$/gi, "").replace(/\s{2,}/g, " ")
-      );
-      current = {
-        title: normalizedTitle || clean,
-        descriptionLines: [],
-        stack: normalizeText(
-          String(stackPart || "")
-            .replace(/\b(?:GitHub|Live)\b/gi, "")
-            .replace(/\s{2,}/g, " ")
-        ),
-        date: maybeExtractDate(clean),
-        githubUrl: "",
-        demoUrl: ""
-      };
-      continue;
-    }
-
-    current.descriptionLines.push(clean);
-  }
-
-  commitCurrent();
-  return projects.slice(0, 6);
-};
-
-const parseAchievementEntriesFromText = (achievementsText) => {
-  const rawLines = String(achievementsText || "")
-    .split(/\r?\n/)
-    .map((line) => normalizeText(line))
-    .filter(Boolean);
-
-  const entries = [];
-  let current = null;
-
-  const commitCurrent2 = () => {
-    if (!current) {
-      return;
-    }
-    const title = normalizeText(current.title);
-    const bullets = uniqueStrings(current.bullets || []).slice(0, 6);
-    if (title || bullets.length) {
-      entries.push({
-        title: title || "Untitled Achievement",
-        date: normalizeText(current.date),
-        bullets
-      });
-    }
-  };
-
-  for (const line of rawLines) {
-    const isBullet = /^[-*•]\s+/.test(line);
-    const clean = toCleanLine(line);
-    if (!clean) {
-      continue;
-    }
-
-    if (headingHintRegex.test(clean)) {
-      continue;
-    }
-
-    if (isBullet) {
-      if (!current) {
-        current = { title: "", date: "", bullets: [] };
-      }
-      current.bullets.push(clean);
-      continue;
-    }
-
-    commitCurrent2();
-    current = {
-      title: clean.replace(/\s*[|]\s*$/, ""),
-      date: maybeExtractDate(clean),
-      bullets: []
-    };
-  }
-
-  commitCurrent2();
-  return entries.slice(0, 8);
-};
-
-const toSkillSections = (skills = []) => {
-  const sections = {
-    Languages: [],
-    Frameworks: [],
-    Tools: [],
-    Libraries: [],
-    "Core Skills": []
-  };
-
-  for (const skill of uniqueStrings(skills).slice(0, 40)) {
-    const lower = skill.toLowerCase();
-    if (/(javascript|typescript|python|java|c\+\+|c#|go|golang|php|ruby|kotlin|swift|sql|html|css)/i.test(lower)) {
-      sections.Languages.push(skill);
-      continue;
-    }
-    if (/(react|next|angular|vue|svelte|node|express|nestjs|django|flask|spring|laravel|tailwind)/i.test(lower)) {
-      sections.Frameworks.push(skill);
-      continue;
-    }
-    if (/(docker|kubernetes|jenkins|github actions|gitlab|terraform|ansible|aws|gcp|azure|linux|firebase|mongodb|postgres|mysql|redis|figma|postman)/i.test(lower)) {
-      sections.Tools.push(skill);
-      continue;
-    }
-    if (/(redux|zustand|numpy|pandas|opencv|matplotlib|lodash|socket|chart|d3|shadcn|radix)/i.test(lower)) {
-      sections.Libraries.push(skill);
-      continue;
-    }
-    sections["Core Skills"].push(skill);
-  }
-
-  return Object.entries(sections)
-    .map(([title, items]) => ({ title, skills: uniqueStrings(items) }))
-    .filter((section) => section.skills.length > 0)
-    .slice(0, 6);
-};
-
-const normalizeSkillSectionTitle = (rawTitle = "") => {
-  const title = normalizeText(rawTitle).toLowerCase();
-  if (title.includes("language")) return "Languages";
-  if (title.includes("framework") || title.includes("web development")) return "Frameworks";
-  if (title.includes("tool") || title.includes("devops") || title.includes("cloud")) return "Tools";
-  if (title.includes("library") || title.includes("database") || title.includes("ai")) return "Libraries";
-  return "Core Skills";
-};
-
-const parseSkillSectionsFromText = (skillsText) => {
-  const lines = toNonEmptyLines(skillsText).filter((line) => !headingHintRegex.test(line));
-  const sections = new Map();
-
-  const pushSkill = (title, skill) => {
-    const normalizedTitle = normalizeSkillSectionTitle(title);
-    const cleanedSkill = normalizeText(skill).replace(/^[\-*•]\s*/, "");
-    if (!cleanedSkill) {
-      return;
-    }
-    const current = sections.get(normalizedTitle) || [];
-    current.push(cleanedSkill);
-    sections.set(normalizedTitle, current);
-  };
-
-  for (const line of lines) {
-    const categoryMatch = line.match(/^([^:]{2,50})\s*:\s*(.+)$/);
-    if (categoryMatch) {
-      const [, title, values] = categoryMatch;
-      values
-        .split(/\s*,\s*/)
-        .map((item) => normalizeText(item))
-        .filter(Boolean)
-        .forEach((item) => pushSkill(title, item));
-      continue;
-    }
-
-    line
-      .split(/\s*,\s*/)
-      .map((item) => normalizeText(item))
-      .filter(Boolean)
-      .forEach((item) => pushSkill("Core Skills", item));
-  }
-
-  const parsedSections = Array.from(sections.entries())
-    .map(([title, skills]) => ({ title, skills: uniqueStrings(skills) }))
-    .filter((section) => section.skills.length > 0);
-
-  if (parsedSections.length > 0) {
-    return parsedSections.slice(0, 8);
-  }
-
-  return toSkillSections(extractNormalizedSkills(skillsText));
-};
 
 const normalizeExtractedLinks = (links = []) =>
   uniqueStrings(
@@ -641,46 +212,7 @@ const pickProfileLinksFromExtractedLinks = (links = []) => {
   };
 };
 
-const buildProjectKey = (title = "") =>
-  normalizeText(title)
-    .toLowerCase()
-    .split(/[\s—\-|]+/)
-    .map((item) => item.replace(/[^a-z0-9]/g, ""))
-    .find((item) => item.length >= 3) || "";
 
-const mapExtractedLinksToProjects = (projects = [], linkMeta = {}) => {
-  const githubLinks = [...(linkMeta.projectGithubLinks || [])];
-  const liveLinks = [...(linkMeta.liveLinks || [])];
-  const usedGithub = new Set();
-  const usedLive = new Set();
-
-  const findBestLink = (links, usedSet, key) => {
-    if (!links.length) return "";
-
-    const directIndex = links.findIndex((link, index) => !usedSet.has(index) && key && link.toLowerCase().includes(key));
-    if (directIndex >= 0) {
-      usedSet.add(directIndex);
-      return links[directIndex];
-    }
-
-    const firstIndex = links.findIndex((_, index) => !usedSet.has(index));
-    if (firstIndex >= 0) {
-      usedSet.add(firstIndex);
-      return links[firstIndex];
-    }
-
-    return "";
-  };
-
-  return projects.map((project) => {
-    const key = buildProjectKey(project.title);
-    return {
-      ...project,
-      githubUrl: normalizeText(project.githubUrl) || findBestLink(githubLinks, usedGithub, key),
-      demoUrl: normalizeText(project.demoUrl) || findBestLink(liveLinks, usedLive, key)
-    };
-  });
-};
 
 const collectSkillValues = (skills) => {
   if (!skills || typeof skills !== "object") {
@@ -1497,26 +1029,27 @@ export const parseResumeForOnboarding = asyncHandler(async (req, res) => {
 
   const extractedLinks = await extractResumeLinksFromUploadedResume(req.file, extractedText);
   const linkMeta = pickProfileLinksFromExtractedLinks(extractedLinks);
-  const focusedSections = extractFocusedResumeSections(extractedText, { includeFallbackExperience: false });
-  const email = normalizeText(String(extractedText.match(emailRegex)?.[0] || "").toLowerCase()) || linkMeta.emailFromMailto;
-  const phone = normalizeText(String(extractedText.match(phoneRegex)?.[0] || ""));
-  const linkedInUrl = normalizeText(extractedText.match(linkedInRegex)?.[0] || "") || linkMeta.linkedInUrl;
-  const githubUrl = normalizeText(extractedText.match(githubRegex)?.[0] || "") || linkMeta.githubUrl;
 
-  const displayName = inferDisplayName(extractedText);
-  const headline = inferHeadline(extractedText, displayName);
-  const about = inferAboutFromTopLines(extractedText) || normalizeText(focusedSections.summaryText || "");
+  // Call LLM for parsing
+  const rawLlmResponse = await parseResumeWithLLM({ rawText: extractedText, linkMeta });
 
-  const parsedEducationEntries = parseEducationEntriesFromText(focusedSections.educationText || "");
-  const parsedExperience = parseExperienceEntriesFromText(focusedSections.experienceText || "");
-  const parsedProjects = mapExtractedLinksToProjects(
-    parseProjectEntriesFromText(focusedSections.projectsText || ""),
-    linkMeta
-  );
+  let parsedJson = {};
+  try {
+    parsedJson = JSON.parse(rawLlmResponse);
+  } catch (err) {
+    parsedJson = {};
+  }
 
-  const skillSource = normalizeText(focusedSections.skillsText) ? focusedSections.skillsText : extractedText;
-  const parsedSkillSections = parseSkillSectionsFromText(skillSource);
-  const parsedAchievements = parseAchievementEntriesFromText(focusedSections.achievementsText || "");
+  const parsedData = llmParsedResumeSchema.parse(parsedJson);
+
+  // Fallback metadata extracted with regex for higher reliability on contact fields
+  const emailRegexMatch = normalizeText(String(extractedText.match(emailRegex)?.[0] || "").toLowerCase());
+  const phoneRegexMatch = normalizeText(String(extractedText.match(phoneRegex)?.[0] || ""));
+
+  const email = parsedData.contact?.email || emailRegexMatch || linkMeta.emailFromMailto || "";
+  const phone = parsedData.profile?.phone || phoneRegexMatch || "";
+  const linkedInUrl = parsedData.preferences?.linkedInUrl || linkMeta.linkedInUrl || "";
+  const githubUrl = parsedData.preferences?.githubUrl || linkMeta.githubUrl || "";
 
   return res.status(200).json(
     new ApiResponse(
@@ -1524,10 +1057,10 @@ export const parseResumeForOnboarding = asyncHandler(async (req, res) => {
       {
         parsed: {
           profile: {
-            displayName,
-            headline,
+            displayName: parsedData.profile?.displayName || "",
+            headline: parsedData.profile?.headline || "",
             phone,
-            about
+            about: parsedData.profile?.about || ""
           },
           preferences: {
             linkedInUrl,
@@ -1536,11 +1069,11 @@ export const parseResumeForOnboarding = asyncHandler(async (req, res) => {
           contact: {
             email
           },
-          educationEntries: parsedEducationEntries,
-          skillSections: parsedSkillSections,
-          experience: parsedExperience,
-          projects: parsedProjects,
-          achievements: parsedAchievements
+          educationEntries: parsedData.educationEntries,
+          skillSections: parsedData.skillSections,
+          experience: parsedData.experience,
+          projects: parsedData.projects,
+          achievements: parsedData.achievements
         },
         extractionMeta: {
           originalFileName: req.file.originalname || "",

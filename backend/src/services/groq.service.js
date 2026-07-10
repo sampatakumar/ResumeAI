@@ -197,3 +197,102 @@ export const generateAtsDescriptionBullets = async ({
   }
 };
 
+export const parseResumeWithLLM = async ({ rawText, linkMeta }) => {
+  const systemPrompt = [
+    "You are an expert resume parsing AI.",
+    "Extract structured professional profile information from the raw resume text and provided link metadata.",
+    "You must return a JSON object conforming exactly to this structure:",
+    "{",
+    '  "profile": {',
+    '    "displayName": "string (Candidate full name)",',
+    '    "headline": "string (e.g. Software Developer)",',
+    '    "phone": "string",',
+    '    "about": "string (professional summary, 3-5 sentences)"',
+    "  },",
+    '  "preferences": {',
+    '    "linkedInUrl": "string",',
+    '    "githubUrl": "string (personal profile URL)"',
+    "  },",
+    '  "contact": {',
+    '    "email": "string"',
+    "  },",
+    '  "educationEntries": [',
+    "    {",
+    '      "degree": "string (e.g. B.Tech, Master of Science)",',
+    '      "specialization": "string (e.g. Computer Science)",',
+    '      "college": "string",',
+    '      "location": "string",',
+    '      "endDate": "string (date or year)",',
+    '      "grade": "string (GPA/CGPA/Percentage)"',
+    "    }",
+    "  ],",
+    '  "skillSections": [',
+    "    {",
+    '      "title": "string (e.g. Languages, Frameworks, Tools)",',
+    '      "skills": ["string"]',
+    "    }",
+    "  ],",
+    '  "experience": [',
+    "    {",
+    '      "role": "string",',
+    '      "company": "string",',
+    '      "location": "string",',
+    '      "date": "string (date range)",',
+    '      "bullets": ["string"]',
+    "    }",
+    "  ],",
+    '  "projects": [',
+    "    {",
+    '      "title": "string",',
+    '      "description": "string",',
+    '      "stack": "string (comma-separated tech stack list)",',
+    '      "date": "string",',
+    '      "githubUrl": "string (GitHub repository link if applicable)",',
+    '      "demoUrl": "string (live demo link if applicable)"',
+    "    }",
+    "  ],",
+    '  "achievements": [',
+    "    {",
+    '      "title": "string",',
+    '      "date": "string",',
+    '      "bullets": ["string"]',
+    "    }",
+    "  ]",
+    "}",
+    "",
+    "Ensure all extracted fields are strictly factual and grounded in the resume text. Do not invent details.",
+    "If a field is missing, return an empty string \"\" or an empty array [] for lists."
+  ].join("\n");
+
+  const userPrompt = [
+    "Extracted Resume Link Metadata:",
+    `LinkedIn URL: ${linkMeta?.linkedInUrl || "N/A"}`,
+    `Personal GitHub URL: ${linkMeta?.githubUrl || "N/A"}`,
+    `Email from mailto: ${linkMeta?.emailFromMailto || "N/A"}`,
+    `Other GitHub repository links: ${(linkMeta?.projectGithubLinks || []).join(", ") || "None"}`,
+    `Other live links: ${(linkMeta?.liveLinks || []).join(", ") || "None"}`,
+    "",
+    "Raw Resume Text:",
+    rawText
+  ].join("\n");
+
+  try {
+    incrementDailyCounter("groqRequests", 1);
+    const completion = await groq.chat.completions.create({
+      model: env.GROQ_MODEL,
+      temperature: 0.1,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ]
+    });
+
+    return completion.choices?.[0]?.message?.content?.trim() || "{}";
+  } catch (error) {
+    const providerMessage = error instanceof Error ? error.message : "Unknown Groq API error";
+    throw new Error(`Groq resume parsing failed: ${providerMessage}`);
+  }
+};
+
+
