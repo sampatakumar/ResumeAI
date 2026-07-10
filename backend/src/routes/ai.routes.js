@@ -42,7 +42,28 @@ router.post("/onboarding/parse-resume", verifyFirebaseToken, heavyAiLimiter, (re
 				});
 			}
 			next(error);
-			return;
+		}
+
+		if (req.file) {
+			const isPdfOrDocx = /\.(pdf|docx)$/i.test(req.file.originalname || "") ||
+				req.file.mimetype === "application/pdf" ||
+				req.file.mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+			if (!isPdfOrDocx) {
+				return res.status(400).json({
+					success: false,
+					message: "Only PDF and DOCX files are allowed for onboarding.",
+					statusCode: 400
+				});
+			}
+
+			if (req.file.size > 2 * 1024 * 1024) {
+				return res.status(413).json({
+					success: false,
+					message: "Onboarding resume file must not exceed 2 MB.",
+					statusCode: 413
+				});
+			}
 		}
 
 		res.on("finish", () => {

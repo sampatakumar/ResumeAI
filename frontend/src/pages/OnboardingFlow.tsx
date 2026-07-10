@@ -468,6 +468,25 @@ export default function OnboardingFlow() {
       return;
     }
 
+    // Validate file type (only PDF and DOCX)
+    const allowedTypes = new Set([
+      "application/pdf",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    ]);
+    const lowerName = file.name.toLowerCase();
+    const isAllowed = allowedTypes.has(file.type) || lowerName.endsWith(".pdf") || lowerName.endsWith(".docx");
+
+    if (!isAllowed) {
+      toast.error("Please upload only PDF or DOCX files.");
+      return;
+    }
+
+    // Validate file size (max 2 MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("File size must not exceed 2 MB.");
+      return;
+    }
+
     if (!idToken) {
       toast.error("Your session expired. Please sign in again.");
       navigate("/");
@@ -1001,7 +1020,7 @@ function ProfileStep({
             <div>
               <p className="text-sm font-semibold text-foreground">Have a resume already?</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Upload PDF/DOCX/TXT/image and we will auto-fill what we can.
+                Upload PDF or DOCX (max 2 MB) and we will auto-fill what we can.
               </p>
             </div>
             <Button
@@ -1029,7 +1048,7 @@ function ProfileStep({
             <input
               id="onboarding-resume-upload"
               type="file"
-              accept=".pdf,.docx,.txt,.tex,.png,.jpg,.jpeg,.webp"
+              accept=".pdf,.docx"
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0] || null;
@@ -1335,7 +1354,7 @@ function PreferencesStep({
                 </div>
 
                 <Textarea
-                  placeholder="Har line par ek bullet point likhein"
+                  placeholder="Write one bullet point per line"
                   className="min-h-[100px] resize-none"
                   value={row.bullets}
                   onChange={(event) => onUpdateExperienceRow(index, { bullets: event.target.value })}
@@ -1384,7 +1403,7 @@ function ProjectStep({
         </div>
         <div>
           <h2 className="text-lg font-bold text-foreground">Projects & Summary</h2>
-          <p className="text-sm text-muted-foreground">Multiple projects add karein, phir last me AI summary generate karein.</p>
+          <p className="text-sm text-muted-foreground">Add multiple projects, then generate an AI profile summary at the end.</p>
         </div>
       </div>
 
