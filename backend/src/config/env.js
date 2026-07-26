@@ -7,7 +7,7 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   PORT: z.coerce.number().int().positive().default(8000),
   API_PREFIX: z.string().default("/api/v1"),
-  CORS_ORIGIN: z.string().min(1, "CORS_ORIGIN is required"),
+  CORS_ORIGIN: z.string().optional().default("*"),
   MONGODB_URI: z.string().min(1, "MONGODB_URI is required"),
 
   FIREBASE_PROJECT_ID: z.string().min(1, "FIREBASE_PROJECT_ID is required"),
