@@ -1,6 +1,6 @@
 import { firebaseAuth } from "./firebase";
 
-const DEFAULT_API_BASE_URL = "http://localhost:8000/api/v1";
+const DEFAULT_API_BASE_URL = "https://resumeai-an6u.onrender.com/api/v1";
 
 export const getApiBaseUrl = () => (import.meta.env.VITE_API_URL || DEFAULT_API_BASE_URL).replace(/\/$/, "");
 
