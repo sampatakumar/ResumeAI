@@ -21,6 +21,7 @@ import { incrementDailyCounter } from "./models/analytics.models.js";
 
 const app = express();
 const normalizeOrigin = (value) => String(value || "").trim().replace(/\/+$/, "");
+
 const allowedOrigins = Array.from(
   new Set(
     String(env.CORS_ORIGIN || "")
@@ -30,6 +31,25 @@ const allowedOrigins = Array.from(
   )
 );
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true;
+  const normalized = normalizeOrigin(origin);
+
+  if (allowedOrigins.includes("*") || allowedOrigins.includes(normalized)) {
+    return true;
+  }
+
+  // Automatically allow Vercel frontend deployments and local dev servers
+  if (
+    /\.vercel\.app$/i.test(normalized) ||
+    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(normalized)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
 const defaultCspDirectives = helmet.contentSecurityPolicy.getDefaultDirectives();
 
 app.use(
@@ -38,7 +58,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...defaultCspDirectives,
-        "frame-ancestors": ["'self'", ...allowedOrigins]
+        "frame-ancestors": ["'self'", "*"]
       }
     },
     xFrameOptions: false,
@@ -50,18 +70,11 @@ app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
-        return;
+      } else {
+        callback(null, false);
       }
-
-      const normalizedOrigin = normalizeOrigin(origin);
-      if (allowedOrigins.includes(normalizedOrigin)) {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error(`Origin not allowed by CORS: ${origin}`));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
