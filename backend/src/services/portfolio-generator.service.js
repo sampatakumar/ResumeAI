@@ -80,7 +80,7 @@ const generateStaticHtml = ({ userProfile, projects, theme }) => {
 <body class=\"${selectedTheme.background} text-slate-900 min-h-screen\">
   <main class=\"max-w-4xl mx-auto px-6 py-12\">
     <header class=\"rounded-2xl bg-white/90 shadow-md border border-slate-200 p-8\">
-      <p class=\"text-sm uppercase tracking-[0.2em] ${selectedTheme.accent}\">BuildMyResume Portfolio</p>
+      <p class=\"text-sm uppercase tracking-[0.2em] ${selectedTheme.accent}\">ResumeAI Portfolio</p>
       <h1 class=\"text-4xl font-bold mt-2\">${displayName}</h1>
       <p class=\"mt-3 text-slate-600\">${headline}</p>
     </header>
@@ -136,7 +136,7 @@ function App() {
   return (
     <main className=\"page ${theme === "minimal" ? "minimal" : "modern"}\"> 
       <section className=\"hero\">
-        <p className=\"eyebrow\">BuildMyResume Portfolio</p>
+        <p className=\"eyebrow\">ResumeAI Portfolio</p>
         <h1>{profile.name}</h1>
         {profile.email ? <p className=\"subtitle\">{profile.email}</p> : null}
       </section>

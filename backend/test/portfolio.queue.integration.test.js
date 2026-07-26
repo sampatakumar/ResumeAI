@@ -58,7 +58,7 @@ describe("Portfolio publish queue integration", () => {
       .set("x-test-uid", "user-1")
       .send({
         preference: { theme: "minimal" },
-        customDomain: "pankaj.dev"
+        customDomain: "sampatakumarsv.dev"
       });
 
     expect(publishResponse.status).toBe(200);
@@ -83,7 +83,7 @@ describe("Portfolio publish queue integration", () => {
     resolvePublish({
       url: "https://portfolio.pages.dev",
       domainInfo: {
-        domain: "pankaj.dev"
+        domain: "sampatakumarsv.dev"
       }
     });
 
@@ -95,9 +95,38 @@ describe("Portfolio publish queue integration", () => {
       expect(completedStatus.status).toBe(200);
       expect(completedStatus.body.status).toBe("completed");
       expect(completedStatus.body.url).toBe("https://portfolio.pages.dev");
-      expect(completedStatus.body.customDomain).toBe("pankaj.dev");
+      expect(completedStatus.body.customDomain).toBe("sampatakumarsv.dev");
     });
 
     expect(incrementDailyCounter).toHaveBeenCalledWith("portfoliosPublished", 1);
+  });
+
+  it("returns detailed Cloudflare error status when deployment fails due to Cloudflare", async () => {
+    publishPortfolio.mockRejectedValue(
+      new Error("Authentication error: Invalid API Token (Verify CF_ACCOUNT_ID and CF_API_TOKEN in backend/.env)")
+    );
+
+    const { default: portfolioRouter } = await import("../src/routes/portfolio.routes.js");
+    const app = express();
+    app.use(express.json());
+    app.use("/portfolio", portfolioRouter);
+
+    const publishResponse = await request(app)
+      .post("/portfolio/publish")
+      .set("x-test-uid", "user-3")
+      .send({});
+
+    const jobId = publishResponse.body.jobId;
+
+    await vi.waitFor(async () => {
+      const statusRes = await request(app)
+        .get(`/portfolio/status/${jobId}`)
+        .set("x-test-uid", "user-3");
+
+      expect(statusRes.status).toBe(200);
+      expect(statusRes.body.status).toBe("failed");
+      expect(statusRes.body.error).toContain("Deployment failed due to Cloudflare");
+      expect(statusRes.body.error).toContain("Authentication error");
+    });
   });
 });

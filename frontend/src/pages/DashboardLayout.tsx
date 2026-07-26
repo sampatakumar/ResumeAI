@@ -32,7 +32,7 @@ const DashboardLayout = () => {
             <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/80 to-primary/20 flex items-center justify-center shadow-inner">
               <FileText className="h-4 w-4 text-white" />
             </div>
-            <span className="text-sm font-semibold tracking-tight text-foreground">BuildMyResume</span>
+            <span className="text-sm font-semibold tracking-tight text-foreground">ResumeAI</span>
           </div>
           <div className="flex items-center gap-1.5">
             <ThemeToggle className="h-9 w-9 border-border/60 bg-background/50" />
@@ -49,7 +49,7 @@ const DashboardLayout = () => {
           </div>
         </div>
         <nav className="px-3 pb-3 flex gap-2 overflow-x-auto no-scrollbar">
-          {[...dashboardLinks, ...(backendUser?.email === "shrishpankajguptadbd6@gmail.com" ? [{ to: "/dashboard/admin", icon: ShieldAlert, label: "Analytics" }] : [])].map((link) => {
+          {[...dashboardLinks, ...(backendUser?.email === "sampatakumarsv@gmail.com" ? [{ to: "/dashboard/admin", icon: ShieldAlert, label: "Analytics" }] : [])].map((link) => {
             const isActive = location.pathname === link.to;
 
             return (

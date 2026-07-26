@@ -13,7 +13,12 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().min(1, "FIREBASE_PROJECT_ID is required"),
 
   SUPABASE_URL: z.string().min(1, "SUPABASE_URL is required"),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1, "SUPABASE_SERVICE_ROLE_KEY is required"),
+  SUPABASE_SERVICE_ROLE_KEY: z.string()
+    .min(1, "SUPABASE_SERVICE_ROLE_KEY is required")
+    .refine(
+      (val) => val !== "your_service_role_key",
+      "SUPABASE_SERVICE_ROLE_KEY must be set to your actual Supabase service role key (not the placeholder)"
+    ),
   SUPABASE_STORAGE_BUCKET: z.string().min(1, "SUPABASE_STORAGE_BUCKET is required").default("resumes"),
 
   GROQ_API_KEY: z.string().min(1, "GROQ_API_KEY is required"),

@@ -1,7 +1,7 @@
 {
-  "name": "buildmyresume-backend",
+  "name": "resumeai-backend",
   "version": "1.0.0",
-  "description": "Backend API for BuildMyResume",
+  "description": "Backend API for ResumeAI",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

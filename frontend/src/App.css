@@ -2,25 +2,25 @@
    Theme Variables (Light & Dark Mode)
    ========================================= */
 :root {
-  /* Light Mode: Frost & Ocean */
+  /* Light Mode: Elegant Ocean & Cyan */
   --bg-color: #f8fafc;
   --text-main: #0f172a;
   --text-muted: #64748b;
   --accent-color: #0d9488;
-  --accent-glow: rgba(13, 148, 136, 0.4);
-  --card-bg: rgba(255, 255, 255, 0.6);
-  --card-border: rgba(15, 23, 42, 0.1);
+  --accent-glow: rgba(13, 148, 136, 0.25);
+  --card-bg: rgba(255, 255, 255, 0.75);
+  --card-border: rgba(15, 23, 42, 0.08);
 }
 
 .dark {
-  /* Dark Mode: Abyss & Neon */
-  --bg-color: #0b1120;
+  /* Dark Mode: Deep Midnight & Vibrant Cyan */
+  --bg-color: #080d1a;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --accent-color: #2dd4bf;
-  --accent-glow: rgba(45, 212, 191, 0.5);
-  --card-bg: rgba(30, 41, 59, 0.5);
-  --card-border: rgba(248, 250, 252, 0.1);
+  --accent-color: #14b8a6;
+  --accent-glow: rgba(20, 184, 166, 0.35);
+  --card-bg: rgba(15, 23, 42, 0.65);
+  --card-border: rgba(248, 250, 252, 0.08);
 }
 
 /* Base Body Styles for smooth theme switching */

@@ -74,26 +74,38 @@ export const uploadResumeToSupabaseStorage = async ({ buffer, originalFileName, 
     originalFileName
   });
 
-  const { data, error } = await supabase.storage
-    .from(bucketName)
-    .upload(storagePath, buffer, {
-      contentType: mimeType || "application/octet-stream",
-      cacheControl: "private, max-age=0, no-transform",
-      upsert: true
-    });
-
-  if (error) {
-    throw error;
+  // Validate Supabase configuration
+  if (!env.SUPABASE_URL || env.SUPABASE_URL.includes("https://")) {
+    if (!env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_SERVICE_ROLE_KEY === "your_service_role_key") {
+      throw new Error("Supabase service role key is not configured. Please set SUPABASE_SERVICE_ROLE_KEY in your .env file.");
+    }
   }
 
-  return {
-    bucketName,
-    storagePath,
-    fileName: path.posix.basename(storagePath),
-    contentType: mimeType || "application/octet-stream",
-    size: buffer.length,
-    filePath: buildSupabaseStorageUri(bucketName, storagePath)
-  };
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucketName)
+      .upload(storagePath, buffer, {
+        contentType: mimeType || "application/octet-stream",
+        cacheControl: "private, max-age=0, no-transform",
+        upsert: true
+      });
+
+    if (error) {
+      throw new Error(`Supabase upload error: ${error.message || JSON.stringify(error)}`);
+    }
+
+    return {
+      bucketName,
+      storagePath,
+      fileName: path.posix.basename(storagePath),
+      contentType: mimeType || "application/octet-stream",
+      size: buffer.length,
+      filePath: buildSupabaseStorageUri(bucketName, storagePath)
+    };
+  } catch (uploadError) {
+    const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+    throw new Error(`Failed to upload resume to Supabase Storage: ${errorMessage}`);
+  }
 };
 
 export const downloadResumeFromSupabaseStorage = async ({ bucketName, storagePath }) => {

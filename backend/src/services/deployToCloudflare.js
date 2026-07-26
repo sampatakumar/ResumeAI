@@ -58,12 +58,20 @@ const formatAxiosError = (error) => ({
 });
 
 const getAxiosErrorMessage = (error) => {
+  const status = error?.response?.status;
   const apiErrors = error?.response?.data?.errors;
   if (Array.isArray(apiErrors) && apiErrors.length > 0) {
     const firstError = apiErrors[0];
     if (firstError?.message) {
+      if (status === 401 || status === 403 || firstError.code === 1000 || firstError.code === 10000) {
+        return `Authentication error: ${firstError.message} (Verify CF_ACCOUNT_ID and CF_API_TOKEN in backend/.env)`;
+      }
       return firstError.message;
     }
+  }
+
+  if (status === 401 || status === 403) {
+    return "Authentication failed (Verify CF_ACCOUNT_ID and CF_API_TOKEN in backend/.env)";
   }
 
   return error?.message || "Unknown axios error";

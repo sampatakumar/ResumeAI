@@ -22,8 +22,15 @@ const buildFriendlyError = (error) => {
   const rawDetails = error?.message || "Unknown error";
   const stack = error?.stack || "";
 
-  if (rawDetails.toLowerCase().includes("cloudflare") || stack.includes("deployToCloudflare")) {
-    return "Deployment failed due to Cloudflare.";
+  const isCloudflareError =
+    rawDetails.toLowerCase().includes("cloudflare") ||
+    rawDetails.toLowerCase().includes("cf_account_id") ||
+    rawDetails.toLowerCase().includes("cf_api_token") ||
+    stack.includes("deployToCloudflare");
+
+  if (isCloudflareError) {
+    const detail = rawDetails ? `: ${rawDetails}` : "";
+    return `Deployment failed due to Cloudflare${detail}`;
   }
 
   if (rawDetails.toLowerCase().includes("vite") || stack.includes("buildViteProject")) {

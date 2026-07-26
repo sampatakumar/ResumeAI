@@ -62,7 +62,7 @@ const Landing = () => {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/80 to-primary/20 flex items-center justify-center shadow-inner">
               <FileText className="h-4 w-4 text-white" />
             </div>
-            <span className="hidden sm:inline font-bold text-xl tracking-tight text-foreground">BuildMyResume</span>
+            <span className="hidden sm:inline font-bold text-xl tracking-tight text-foreground">ResumeAI</span>
           </div>
           <div className="flex items-center gap-4">
             <ThemeToggle className="h-9 w-9 border-border/60 bg-background/40" />
@@ -176,10 +176,10 @@ const Landing = () => {
         <div className="container mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-foreground font-semibold">
             <FileText className="h-5 w-5 text-primary" />
-            BuildMyResume
+            ResumeAI
           </div>
           <div className="text-sm text-muted-foreground font-medium">
-            © {new Date().getFullYear()} BuildMyResume. Built with precision.
+            © {new Date().getFullYear()} ResumeAI. Built with precision.
           </div>
         </div>
       </footer>

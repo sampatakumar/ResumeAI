@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
-const ADMIN_EMAIL = "shrishpankajguptadbd6@gmail.com";
+const ADMIN_EMAIL = "sampatakumarsv@gmail.com";
 
 interface DailyAnalytics {
   date: string;

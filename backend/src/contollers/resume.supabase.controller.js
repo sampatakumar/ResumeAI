@@ -243,20 +243,28 @@ export const createResume = asyncHandler(async (req, res) => {
       bytes: req.file.size || req.file.buffer?.length || 0
     });
 
-    supabaseUpload = await uploadResumeToSupabaseStorage({
-      buffer: req.file.buffer,
-      originalFileName: req.file.originalname,
-      mimeType: req.file.mimetype,
-      ownerKey: req.auth.uid
-    });
+    try {
+      supabaseUpload = await uploadResumeToSupabaseStorage({
+        buffer: req.file.buffer,
+        originalFileName: req.file.originalname,
+        mimeType: req.file.mimetype,
+        ownerKey: req.auth.uid
+      });
 
-    console.info(`[resume-debug][${traceId}] createResume:supabase-upload:response`, {
-      bucketName: supabaseUpload.bucketName,
-      storagePath: supabaseUpload.storagePath,
-      fileName: supabaseUpload.fileName,
-      filePath: supabaseUpload.filePath,
-      size: supabaseUpload.size
-    });
+      console.info(`[resume-debug][${traceId}] createResume:supabase-upload:response`, {
+        bucketName: supabaseUpload.bucketName,
+        storagePath: supabaseUpload.storagePath,
+        fileName: supabaseUpload.fileName,
+        filePath: supabaseUpload.filePath,
+        size: supabaseUpload.size
+      });
+    } catch (uploadError) {
+      const errorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+      console.error(`[resume-debug][${traceId}] createResume:supabase-upload:error`, {
+        error: errorMessage
+      });
+      throw new ApiError(502, `Resume upload failed: ${errorMessage}`);
+    }
   }
 
   const detectedFormat = req.file

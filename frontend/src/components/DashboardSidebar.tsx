@@ -25,12 +25,12 @@ const DashboardSidebar = () => {
         <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary/80 to-primary/20 flex items-center justify-center shadow-inner">
           <FileText className="h-4 w-4 text-white" />
         </div>
-        <span className="hidden lg:inline font-bold text-lg tracking-tight text-foreground">BuildMyResume</span>
+        <span className="hidden lg:inline font-bold text-lg tracking-tight text-foreground">ResumeAI</span>
       </div>
 
       {/* Navigation Links */}
       <nav className="flex-1 px-3 lg:px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
-        {[...dashboardLinks, ...(backendUser?.email === "shrishpankajguptadbd6@gmail.com" ? [{ to: "/dashboard/admin", icon: ShieldAlert, label: "Analytics" }] : [])].map((link) => {
+        {[...dashboardLinks, ...(backendUser?.email === "sampatakumarsv@gmail.com" ? [{ to: "/dashboard/admin", icon: ShieldAlert, label: "Analytics" }] : [])].map((link) => {
           const isActive = location.pathname === link.to;
           
           return (

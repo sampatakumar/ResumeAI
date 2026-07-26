@@ -26,16 +26,16 @@ describe("Dashboard profile snapshot integration", () => {
     const user = {
       _id: "u1",
       firebaseUid: "firebase_u1",
-      displayName: "Pankaj",
-      email: "pankaj@example.com",
+      displayName: "Sampatakumar",
+      email: "sampatakumar@gmail.com",
       photoURL: "",
       createdAt: new Date("2026-01-01T10:00:00.000Z"),
       updatedAt: new Date("2026-01-02T10:00:00.000Z"),
       lastLoginAt: new Date("2026-01-03T10:00:00.000Z"),
-      linkedInUrl: "https://linkedin.com/in/pankaj",
-      githubUrl: "https://github.com/pankaj",
-      leetCodeId: "pankaj-lc",
-      geeksForGeeksId: "pankaj-gfg",
+      linkedInUrl: "https://linkedin.com/in/sampatakumar",
+      githubUrl: "https://github.com/sampatakumar",
+      leetCodeId: "sampatakumar-lc",
+      geeksForGeeksId: "sampatakumar-gfg",
       education: ["B.Tech - ABC College"],
       educationEntries: [{ degree: "B.Tech", college: "ABC College" }],
       skillLanguages: ["JavaScript", "TypeScript"],
@@ -45,7 +45,7 @@ describe("Dashboard profile snapshot integration", () => {
       skillSections: [{ title: "Core", skills: ["Node.js"] }],
       experience: [{ role: "Developer", company: "XYZ" }],
       achievements: [{ title: "Hackathon Winner" }],
-      customDomain: "pankaj.dev",
+      customDomain: "praveen.dev",
       notificationsEnabled: true
     };
 
@@ -53,7 +53,7 @@ describe("Dashboard profile snapshot integration", () => {
 
     projectFind.mockReturnValue({
       sort: vi.fn().mockReturnValue({
-        lean: vi.fn().mockResolvedValue([{ _id: "p1", title: "BuildMyResume" }])
+        lean: vi.fn().mockResolvedValue([{ _id: "p1", title: "ResumeAI" }])
       })
     });
 
@@ -69,8 +69,8 @@ describe("Dashboard profile snapshot integration", () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.data.profile.basic.name).toBe("Pankaj");
-    expect(response.body.data.profile.socialProfiles.github.url).toBe("https://github.com/pankaj");
+    expect(response.body.data.profile.basic.name).toBe("Sampatakumar");
+    expect(response.body.data.profile.socialProfiles.github.url).toBe("https://github.com/sampatakumar");
     expect(response.body.data.profile.projects.items).toHaveLength(1);
     expect(response.body.data.profile.resumes).toBeUndefined();
     expect(response.body.data.profile.tailoredResumes).toBeUndefined();

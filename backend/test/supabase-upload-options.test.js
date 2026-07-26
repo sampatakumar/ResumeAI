@@ -46,7 +46,7 @@ describe("supabase resume storage helpers", () => {
 
     const result = await uploadResumeToSupabaseStorage({
       buffer: Buffer.from("resume pdf"),
-      originalFileName: "Shrish Gupta Resume.pdf",
+      originalFileName: "Sampatakumar Resume.pdf",
       mimeType: "application/pdf",
       ownerKey: "user_123"
     });
@@ -59,7 +59,7 @@ describe("supabase resume storage helpers", () => {
     const bufferArg = callArgs[1];
     const optionsArg = callArgs[2];
 
-    expect(storagePath).toMatch(/^user_123\/\d+-[0-9a-f-]+-Shrish_Gupta_Resume\.pdf$/i);
+    expect(storagePath).toMatch(/^user_123\/\d+-[0-9a-f-]+-Sampatakumar_Resume\.pdf$/i);
     expect(bufferArg).toEqual(Buffer.from("resume pdf"));
     expect(optionsArg).toEqual(
       expect.objectContaining({
@@ -73,7 +73,7 @@ describe("supabase resume storage helpers", () => {
       expect.objectContaining({
         bucketName: "resumes-test",
         storagePath,
-        fileName: expect.stringMatching(/Shrish_Gupta_Resume\.pdf$/),
+        fileName: expect.stringMatching(/Sampatakumar_Resume\.pdf$/),
         filePath: `supabase://resumes-test/${storagePath}`
       })
     );

@@ -40,7 +40,13 @@ router.post("/", uploadLimiter, (req, res, next) => {
 				incrementDailyCounter("resumesUploaded", 1);
 			}
 		});
-		createResume(req, res, next);
+
+		// Ensure errors in createResume are caught
+		try {
+			createResume(req, res, next);
+		} catch (err) {
+			next(err);
+		}
 	});
 });
 router.delete("/:resumeId", deleteResume);

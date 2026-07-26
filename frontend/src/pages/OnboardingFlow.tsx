@@ -867,7 +867,7 @@ export default function OnboardingFlow() {
       });
 
       await refreshProfile();
-      toast.success("Onboarding completed. Welcome to BuildMyResume.");
+      toast.success("Onboarding completed. Welcome to ResumeAI.");
       navigate("/dashboard", { replace: true });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to complete onboarding.");

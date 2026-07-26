@@ -9,7 +9,7 @@ const ensureAdminMiddleware = (req, res, next) => {
     if (error) return next(error);
     
     // Strict admin check
-    if (req.auth?.email !== "shrishpankajguptadbd6@gmail.com") {
+    if (req.auth?.email !== "sampatakumarsv@gmail.com") {
       return res.status(403).json({ success: false, error: "Access Denied: Admins Only" });
     }
     
