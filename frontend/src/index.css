@@ -84,6 +84,11 @@
     --neo-shadow-pressed-sm: inset 2px 2px 5px rgba(163, 177, 198, 0.5), inset -2px -2px 5px rgba(255, 255, 255, 0.85);
     --neo-shadow-convex: linear-gradient(145deg, #f0f4f9, #d6dce5);
 
+    /* Neomorphic Scrollbar Colors */
+    --neo-scrollbar-track: rgba(163, 177, 198, 0.25);
+    --neo-scrollbar-thumb: rgba(163, 177, 198, 0.7);
+    --neo-scrollbar-thumb-hover: hsl(174 84% 34%);
+
     --gradient-primary: linear-gradient(135deg, hsl(174 84% 34%), hsl(199 89% 43%));
     --gradient-hero: radial-gradient(circle at 50% 0%, hsl(214 30% 96%) 0%, hsl(214 28% 90%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(214 28% 94%), hsl(214 28% 89%));
@@ -140,6 +145,11 @@
     --neo-shadow-pressed-sm: inset 2px 2px 5px rgba(13, 16, 22, 0.8), inset -2px -2px 5px rgba(35, 42, 55, 0.45);
     --neo-shadow-convex: linear-gradient(145deg, #202632, #151921);
 
+    /* Neomorphic Scrollbar Colors - Dark Theme */
+    --neo-scrollbar-track: rgba(13, 16, 22, 0.5);
+    --neo-scrollbar-thumb: rgba(35, 42, 55, 0.9);
+    --neo-scrollbar-thumb-hover: hsl(172 80% 48%);
+
     --gradient-primary: linear-gradient(135deg, hsl(172 80% 48%), hsl(195 90% 50%));
     --gradient-hero: radial-gradient(circle at 50% 0%, hsl(222 30% 15%) 0%, hsl(222 28% 10%) 100%);
     --gradient-card: linear-gradient(145deg, hsl(222 28% 14%), hsl(222 28% 10%));
@@ -151,6 +161,8 @@
 @layer base {
   * {
     @apply border-border/40;
+    scrollbar-width: thin;
+    scrollbar-color: var(--neo-scrollbar-thumb) var(--neo-scrollbar-track);
   }
 
   body {
@@ -166,6 +178,37 @@
     width: 100%;
     min-height: 100vh;
     margin: 0;
+  }
+
+  /* Global WebKit Neomorphic Scrollbar Customization */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+    box-shadow: var(--neo-shadow-pressed-sm);
+    border-radius: 9999px;
+    margin: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--neo-scrollbar-thumb);
+    box-shadow: var(--neo-shadow-raised-sm);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: all 250ms ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--neo-scrollbar-thumb-hover);
+    box-shadow: var(--neo-shadow-raised), 0 0 12px var(--neo-scrollbar-thumb-hover);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
   }
 }
 
@@ -263,21 +306,25 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+    background: hsl(var(--background));
+    box-shadow: var(--neo-shadow-pressed-sm);
+    border-radius: 9999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.25);
+    background: var(--neo-scrollbar-thumb);
+    box-shadow: var(--neo-shadow-raised-sm);
     border-radius: 9999px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.45);
+    background: var(--neo-scrollbar-thumb-hover);
+    box-shadow: var(--neo-shadow-raised), 0 0 10px var(--neo-scrollbar-thumb-hover);
   }
 
   .text-gradient {
