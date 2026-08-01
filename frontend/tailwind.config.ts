@@ -66,15 +66,19 @@ export default {
         },
       },
       borderRadius: {
-        xl: "var(--radius)", // Mapping default radius to xl for our design system
+        xl: "var(--radius)",
         lg: "calc(var(--radius) - 2px)",
         md: "calc(var(--radius) - 4px)",
         sm: "calc(var(--radius) - 6px)",
       },
       boxShadow: {
-        // Custom neon glows
         'glow-primary': '0 0 15px 2px hsl(var(--primary) / 0.3)',
         'glow-destructive': '0 0 15px 2px hsl(var(--destructive) / 0.3)',
+        'neo-raised': 'var(--neo-shadow-raised)',
+        'neo-raised-sm': 'var(--neo-shadow-raised-sm)',
+        'neo-raised-lg': 'var(--neo-shadow-raised-lg)',
+        'neo-pressed': 'var(--neo-shadow-pressed)',
+        'neo-pressed-sm': 'var(--neo-shadow-pressed-sm)',
       },
       keyframes: {
         "accordion-down": {
@@ -113,12 +117,6 @@ export default {
     tailwindcssAnimate,
     plugin(function ({ addUtilities }: PluginAPI) {
       addUtilities({
-        ".glass": {
-          backgroundColor: "var(--glass-bg)",
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          border: "1px solid hsl(var(--border) / 0.4)"
-        },
         ".glow-primary": {
           boxShadow: "var(--glow-primary)"
         }

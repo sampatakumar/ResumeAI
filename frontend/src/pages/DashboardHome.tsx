@@ -80,7 +80,7 @@ const DashboardHome = () => {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
-          <Button variant="hero-outline" onClick={() => navigate("/dashboard/portfolios")} className="w-full sm:w-auto bg-background/50 backdrop-blur-md">
+          <Button variant="outline" onClick={() => navigate("/dashboard/portfolios")} className="w-full sm:w-auto shadow-neo-raised-sm">
             <Globe className="w-4 h-4 mr-2 text-primary" /> View Sites
           </Button>
           <Button variant="hero" onClick={() => navigate("/dashboard/tailor")} className="w-full sm:w-auto glow-primary">
@@ -94,11 +94,11 @@ const DashboardHome = () => {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08 }}
-          className="glass rounded-2xl p-5 sm:p-6 border border-primary/15"
+          className="bg-card shadow-neo-raised rounded-2xl p-5 sm:p-6 border border-primary/20"
         >
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-primary/80 mb-2">Active Portfolio</p>
+              <p className="text-xs uppercase tracking-[0.2em] text-primary font-semibold mb-2">Active Portfolio</p>
               <h2 className="text-lg font-semibold text-foreground">Saved portfolio link</h2>
               <p className="text-sm text-muted-foreground mt-1 break-all">{activePortfolioLabel}</p>
               {activePortfolio.publishedAt ? (
@@ -108,7 +108,7 @@ const DashboardHome = () => {
               ) : null}
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              <Button variant="outline" onClick={() => navigate("/dashboard/portfolios")} className="w-full sm:w-auto">Manage Portfolio</Button>
+              <Button variant="outline" onClick={() => navigate("/dashboard/portfolios")} className="w-full sm:w-auto shadow-neo-raised-sm">Manage Portfolio</Button>
               <Button variant="hero" onClick={() => window.open(activePortfolioUrl, "_blank", "noopener,noreferrer")} className="w-full sm:w-auto glow-primary">
                 Open Live Site
               </Button>
@@ -118,11 +118,10 @@ const DashboardHome = () => {
       ) : null}
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 xl:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 xl:gap-8">
         {loading ? (
-          /* Skeleton Loaders */
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="glass h-36 rounded-2xl animate-pulse bg-card/20" />
+            <div key={i} className="bg-card shadow-neo-pressed h-36 rounded-2xl animate-pulse" />
           ))
         ) : (
           stats.map((s, i) => (
@@ -131,14 +130,11 @@ const DashboardHome = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 + 0.1 }}
-              className="glass rounded-2xl p-7 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 cursor-default"
+              className="bg-card shadow-neo-raised hover:shadow-neo-raised-lg border border-border/40 rounded-2xl p-7 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 cursor-default"
             >
-              {/* Subtle Background Glow on Hover */}
-              <div className="absolute -inset-1 bg-gradient-to-br from-primary/0 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500 pointer-events-none" />
-              
               <div className="flex items-start justify-between mb-4 relative z-10">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300 border border-primary/10">
-                  <s.icon className="h-6 w-6 text-primary group-hover:text-primary transition-colors" />
+                <div className="h-12 w-12 rounded-xl bg-background shadow-neo-raised flex items-center justify-center border border-primary/20 group-hover:scale-110 transition-transform duration-300">
+                  <s.icon className="h-6 w-6 text-primary" />
                 </div>
               </div>
               
@@ -156,26 +152,26 @@ const DashboardHome = () => {
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.3 }}
-        className="glass rounded-2xl overflow-hidden shadow-sm mt-2"
+        className="bg-card shadow-neo-raised border border-border/40 rounded-2xl overflow-hidden mt-2"
       >
-        <div className="px-5 sm:px-7 py-5 sm:py-6 border-b border-border/40 flex items-center justify-between bg-background/20">
+        <div className="px-5 sm:px-7 py-5 sm:py-6 border-b border-border/40 flex items-center justify-between bg-background/50">
           <div className="flex items-center gap-2.5">
             <Activity className="w-5 h-5 text-primary" />
             <h2 className="font-semibold text-lg text-foreground">Recent Activity</h2>
           </div>
         </div>
         
-        <div className="divide-y divide-border/30 bg-background/10">
+        <div className="divide-y divide-border/30">
           {loading ? (
-              <div className="p-10 text-center text-sm text-muted-foreground animate-pulse">Loading activity feed...</div>
+            <div className="p-10 text-center text-sm text-muted-foreground animate-pulse">Loading activity feed...</div>
           ) : recentActivity.length === 0 ? (
             <div className="p-14 text-center flex flex-col items-center justify-center">
-              <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mb-4">
+              <div className="w-16 h-16 bg-background shadow-neo-pressed rounded-full flex items-center justify-center mb-4 border border-border/30">
                 <Clock className="w-8 h-8 text-muted-foreground/50" />
               </div>
               <h3 className="font-semibold text-foreground mb-1">No recent activity</h3>
               <p className="text-sm text-muted-foreground max-w-sm mb-6">You haven't tailored any resumes or deployed any portfolios recently.</p>
-              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/tailor")}>
+              <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/tailor")} className="shadow-neo-raised-sm">
                 Get Started <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </div>
@@ -187,7 +183,7 @@ const DashboardHome = () => {
                 className="px-5 sm:px-7 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-background/40 transition-colors"
               >
                 <div className="flex items-start gap-4">
-                  <div className="mt-1 w-2 h-2 rounded-full bg-primary/50 shrink-0" />
+                  <div className="mt-1 w-2.5 h-2.5 rounded-full bg-primary shrink-0 shadow-neo-raised-sm" />
                   <div>
                     <p className="text-sm font-medium text-foreground">{item.action}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{item.target}</p>

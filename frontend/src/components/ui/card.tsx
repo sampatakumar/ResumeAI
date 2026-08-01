@@ -5,9 +5,8 @@ const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElemen
   <div
     ref={ref}
     className={cn(
-      "rounded-2xl border border-border/50 shadow-sm transition-all duration-300",
-      "glass bg-card/40 backdrop-blur-xl text-card-foreground", // Thematic glassmorphism
-      "hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1", // Subtle lift effect
+      "rounded-2xl border border-border/40 bg-card text-card-foreground shadow-neo-raised transition-all duration-300",
+      "hover:shadow-neo-raised-lg hover:-translate-y-1",
       className
     )}
     {...props}
@@ -17,7 +16,7 @@ Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-8", className)} {...props} />
+    <div ref={ref} className={cn("flex flex-col space-y-1.5 p-6 md:p-8", className)} {...props} />
   ),
 );
 CardHeader.displayName = "CardHeader";
@@ -41,13 +40,13 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttribu
 CardDescription.displayName = "CardDescription";
 
 const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-8 pt-0", className)} {...props} />,
+  ({ className, ...props }, ref) => <div ref={ref} className={cn("p-6 md:p-8 pt-0", className)} {...props} />,
 );
 CardContent.displayName = "CardContent";
 
 const CardFooter = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn("flex items-center p-8 pt-0 gap-4", className)} {...props} />
+    <div ref={ref} className={cn("flex items-center p-6 md:p-8 pt-0 gap-4", className)} {...props} />
   ),
 );
 CardFooter.displayName = "CardFooter";

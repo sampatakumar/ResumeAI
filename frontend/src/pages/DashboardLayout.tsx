@@ -21,26 +21,27 @@ const DashboardLayout = () => {
   return (
     <div className="flex h-screen min-w-0 bg-background selection:bg-primary/20 selection:text-primary relative overflow-hidden">
       
-      {/* Ambient Background Effects (Consistent across the app) */}
+      {/* Ambient Background Effects */}
       <div className="fixed top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
       <div className="fixed bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-accent/5 rounded-full blur-[150px] -z-10 pointer-events-none" />
-      <div className="fixed inset-0 grid-pattern opacity-[0.15] -z-10 pointer-events-none" />
+      <div className="fixed inset-0 grid-pattern opacity-[0.12] -z-10 pointer-events-none" />
 
-      <div className="md:hidden fixed top-0 inset-x-0 z-50 border-b border-border/50 glass">
+      {/* Responsive Mobile Neomorphic Top Header */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-50 border-b border-border/40 bg-background shadow-neo-raised">
         <div className="h-14 px-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/80 to-primary/20 flex items-center justify-center shadow-inner">
-              <FileText className="h-4 w-4 text-white" />
+            <div className="h-8 w-8 rounded-xl bg-background shadow-neo-raised flex items-center justify-center border border-primary/20">
+              <FileText className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-semibold tracking-tight text-foreground">ResumeAI</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <ThemeToggle className="h-9 w-9 border-border/60 bg-background/50" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle className="h-9 w-9" />
             <Button
               variant="outline"
               size="icon"
               onClick={handleSignOut}
-              className="h-9 w-9 border-border/60 bg-background/50 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="h-9 w-9 text-muted-foreground hover:text-destructive transition-colors shadow-neo-raised-sm"
               title="Sign out"
             >
               <LogOut className="h-[1.1rem] w-[1.1rem]" />
@@ -57,10 +58,10 @@ const DashboardLayout = () => {
                 key={link.to}
                 to={link.to}
                 className={cn(
-                  "shrink-0 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors",
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-200",
                   isActive
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border/50 bg-background/50 text-muted-foreground"
+                    ? "border-primary/40 bg-background shadow-neo-pressed text-primary font-semibold"
+                    : "border-border/40 bg-background shadow-neo-raised-sm text-muted-foreground"
                 )}
               >
                 {link.label}
@@ -75,7 +76,6 @@ const DashboardLayout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 h-full min-w-0 overflow-y-auto overflow-x-hidden relative pt-[7.25rem] md:pt-0">
-        {/* AnimatePresence enables exit animations before the new component enters */}
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
