@@ -124,3 +124,10 @@ Visit `http://localhost:5173` to open the application in your browser.
 
 ## 📄 License
 Licensed under the [MIT License](LICENSE).
+
+---
+
+## 🙏 Acknowledgements
+
+Special thanks to [SgAtjiit](https://github.com/SgAtjiit) for providing reference and inspiration.  
+This project was built with guidance from his work, which helped shape the foundation of **ResumeAI 🚀**.
