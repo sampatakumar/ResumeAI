@@ -87,9 +87,14 @@ app.use(cookieParser());
 
 app.use(apiHitTracker);
 
-// Cron keep-alive — no auth, no rate-limit (placed before apiLimiter)
-app.get(env.API_PREFIX, (_req, res) => {
-  res.status(200).json({ success: true, message: "Server is alive", timestamp: new Date().toISOString() });
+// Root & API base keep-alive — no auth, no rate-limit (placed before apiLimiter)
+app.get(["/", env.API_PREFIX], (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "ResumeAI API Backend is running",
+    healthCheck: `${env.API_PREFIX}/healthcheck`,
+    timestamp: new Date().toISOString()
+  });
 });
 
 const apiLimiter = rateLimit({
