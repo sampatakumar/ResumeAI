@@ -17,7 +17,7 @@ const reviewSchema = resumePayload.refine((body) => body.resumeText.trim().lengt
 });
 
 const chatSchema = resumePayload.extend({
-  savedResumeId: z.string().regex(/^[a-f\\d]{24}$/i).optional(),
+  savedResumeId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
   messages: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().min(1).max(2500)
