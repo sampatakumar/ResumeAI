@@ -11,6 +11,7 @@ import { globalErrorHandler, notFoundHandler } from "./middlewares/error.middlew
 import healthcheckRouter from "./routes/healthcheck.routes.js";
 import authRouter from "./routes/auth.routes.js";
 import aiRouter from "./routes/ai.routes.js";
+import resumeCopilotRouter from "./routes/resume-copilot.routes.js";
 import resumeRouter from "./routes/resume.routes.js";
 import dashboardRouter from "./routes/dashboard.routes.js";
 import projectRouter from "./routes/project.routes.js";
@@ -113,6 +114,7 @@ app.use(env.API_PREFIX, apiLimiter);
 app.use(`${env.API_PREFIX}/healthcheck`, healthcheckRouter);
 app.use(`${env.API_PREFIX}/auth`, authRouter);
 app.use(`${env.API_PREFIX}/ai`, aiRouter);
+app.use(`${env.API_PREFIX}/resume-copilot`, resumeCopilotRouter);
 app.use(`${env.API_PREFIX}/resumes`, resumeRouter);
 app.use(`${env.API_PREFIX}/dashboard`, dashboardRouter);
 app.use(`${env.API_PREFIX}/projects`, projectRouter);
