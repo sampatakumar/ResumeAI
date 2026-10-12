@@ -18,7 +18,7 @@ type Review = {
   ats: { atsReadinessScore: number; scoreLabel: string; scoreType: string; wordCount: number; roleKeywordMatch: number | null; matchedRoleKeywords: string[]; findings: { severity: string; category: string; issue: string; recommendation: string }[] };
   aiUnavailable?: boolean;
 };
-type Props = { resume: Record<string, unknown> | string; savedResumeId?: string; compact?: boolean };
+type Props = { resume: unknown; savedResumeId?: string; compact?: boolean };
 
 export default function ResumeCopilotPanel({ resume, savedResumeId, compact = false }: Props) {
   const { idToken } = useAuth();
@@ -53,7 +53,7 @@ export default function ResumeCopilotPanel({ resume, savedResumeId, compact = fa
     try {
       const response = await apiRequest<{ reply: string }>("/resume-copilot/chat", {
         method: "POST", token: idToken,
-        body: { resume: typeof resume === "string" ? undefined : resume, resumeText: typeof resume === "string" ? resume : undefined, jobRole: jobRole.trim(), messages: next.slice(-10) }
+        body: { resume: typeof resume === "string" ? undefined : resume, resumeText: typeof resume === "string" ? resume : undefined, savedResumeId, jobRole: jobRole.trim(), messages: next.slice(-10) }
       });
       setMessages((current) => [...current, { role: "assistant", content: response.data.reply }]);
     } catch (e) {
