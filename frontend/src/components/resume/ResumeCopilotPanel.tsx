@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MessageCircle, Sparkles, Send, ShieldCheck, AlertTriangle, CheckCircle2, Loader2, X } from "lucide-react";
+import { MessageCircle, Sparkles, Send, ShieldCheck, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
