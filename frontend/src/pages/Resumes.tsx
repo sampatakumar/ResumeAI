@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import AIDescriptionGeneratorDialog from "@/components/AIDescriptionGeneratorDialog";
 import { AI_PROMPT_PRESETS } from "@/config/aiPromptPresets";
 import JakeResumePreview, { type PreviewLayoutConfig } from "@/components/resume/JakeResumePreview";
+import ResumeCopilotPanel from "@/components/resume/ResumeCopilotPanel";
 import type { Achievement, Education, Experience, Project, ResumeData } from "@/components/resume/ResumeTypes";
 import { getRenderableSkillLines } from "@/components/resume/skillFormat";
 import jsPDF from "jspdf";
@@ -831,6 +832,9 @@ const Resumes = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity w-full sm:w-auto">
+                    <Button variant="outline" size="sm" onClick={() => setExpandedResumeId(r._id)} className="h-9 hover:bg-primary/10 hover:text-primary">
+                      <Sparkles className="h-4 w-4 mr-2" /> AI Review
+                    </Button>
                     <Button variant="secondary" size="sm" onClick={() => void handleViewResume(r)} className="h-9 hover:bg-primary/10 hover:text-primary">
                       {expandedResumeId === r._id ? <><ChevronUp className="h-4 w-4 mr-2" /> Close</> : <><Eye className="h-4 w-4 mr-2" /> View</>}
                     </Button>
@@ -843,7 +847,8 @@ const Resumes = () => {
                 {/* Expanded Preview Area */}
                 <AnimatePresence>
                   {expandedResumeId === r._id && (r.filePath || r.content) && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-border/30 bg-black/5 dark:bg-white/5 p-5">
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-border/30 bg-black/5 dark:bg-white/5 p-5 space-y-4">
+                      <ResumeCopilotPanel resume="" savedResumeId={r._id} compact />
                       {r.filePath ? (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
@@ -948,6 +953,7 @@ const Resumes = () => {
 
           {/* Builder Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar bg-background/10 space-y-6">
+            <ResumeCopilotPanel resume={buildResumeDataSnapshot()} compact />
             {builderStep === 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1"><label className="text-xs font-medium text-foreground">Full Name</label><Input value={resumeData.name} onChange={(e) => setResumeData((c) => ({ ...c, name: e.target.value }))} className="bg-background/50" /></div>
