@@ -22,7 +22,7 @@ const chatSchema = resumePayload.extend({
     role: z.enum(["user", "assistant"]),
     content: z.string().min(1).max(2500)
   })).min(1).max(20)
-}).refine((body) => body.resumeText.trim().length >= 20 || serializeResume(body.resume).length >= 20, {
+}).refine((body) => Boolean(body.savedResumeId) || body.resumeText.trim().length >= 20 || serializeResume(body.resume).length >= 20, {
   message: "Add more resume content before chatting with Resume Copilot."
 });
 
