@@ -17,6 +17,7 @@ const reviewSchema = resumePayload.refine((body) => body.resumeText.trim().lengt
 });
 
 const chatSchema = resumePayload.extend({
+  savedResumeId: z.string().regex(/^[a-f\\d]{24}$/i).optional(),
   messages: z.array(z.object({
     role: z.enum(["user", "assistant"]),
     content: z.string().min(1).max(2500)
@@ -38,7 +39,13 @@ export const chatCurrentResume = asyncHandler(async (req, res) => {
   const parsed = chatSchema.safeParse(req.body || {});
   if (!parsed.success) throw new ApiError(400, parsed.error.issues[0]?.message || "Invalid resume chat request");
   const payload = parsed.data;
-  const resumeText = payload.resumeText.trim() || serializeResume(payload.resume);
+  let resumeText = payload.resumeText.trim() || serializeResume(payload.resume);
+  if (payload.savedResumeId) {
+    const savedResume = await Resume.findOne({ _id: payload.savedResumeId, owner: req.user._id });
+    if (!savedResume) throw new ApiError(404, "Resume not found");
+    resumeText = await extractResumeRawText(savedResume);
+    if (!resumeText || resumeText.trim().length < 20) throw new ApiError(422, "Could not extract readable text from this resume.");
+  }
   const reply = await chatWithResumeAi({ resumeText, jobRole: payload.jobRole, messages: payload.messages });
   res.status(200).json(new ApiResponse(200, { reply }, "Resume Copilot replied"));
 });
